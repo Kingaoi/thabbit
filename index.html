@@ -866,7 +866,7 @@ html[data-theme="dark"] body::before{opacity:.05}
    CONFIG
    ============================================================ */
 const CONFIG = Object.freeze({
-  DATA_DIR: './data',
+  DATA_DIR: '.',
   BOT_URL: 'https://t.me/NourGameBot/nour',
   TIMEOUT: 15000,
   STORAGE: { SETTINGS: 'thabbit.settings.v1', STATS: 'thabbit.stats.v1' },
@@ -991,8 +991,8 @@ const Quran = {
   async load(){
     if(this.loaded) return this;
     const [versesText, navigationText, pages, surahs] = await Promise.all([
-      fetch(CONFIG.DATA_DIR + '/verses.jsonl').then(r => { if(!r.ok) throw new Error('verses.jsonl'); return r.text(); }),
-      fetch(CONFIG.DATA_DIR + '/ayah_navigation.jsonl').then(r => { if(!r.ok) throw new Error('ayah_navigation.jsonl'); return r.text(); }),
+      fetch(CONFIG.DATA_DIR + '/verses.json').then(r => { if(!r.ok) throw new Error('verses.json'); return r.text(); }),
+      fetch(CONFIG.DATA_DIR + '/ayah_navigation.json').then(r => { if(!r.ok) throw new Error('ayah_navigation.json'); return r.text(); }),
       fetch(CONFIG.DATA_DIR + '/pages.json').then(r => { if(!r.ok) throw new Error('pages.json'); return r.json(); }),
       fetch(CONFIG.DATA_DIR + '/surahs.json').then(r => { if(!r.ok) throw new Error('surahs.json'); return r.json(); })
     ]);
