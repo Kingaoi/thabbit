@@ -1,0 +1,21 @@
+{
+  "package": "quran_ayah_navigation_package",
+  "source": "quran_advanced_package/verses_core.jsonl",
+  "records": 6236,
+  "files": [
+    "verses.jsonl",
+    "ayah_navigation.jsonl",
+    "pages.json",
+    "surahs.json",
+    "README.md"
+  ],
+  "navigation_fields": [
+    "juz",
+    "manzil",
+    "page",
+    "ruku",
+    "hizbQuarter",
+    "sajda"
+  ],
+  "page_count": 604
+}
