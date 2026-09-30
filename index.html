@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0a5c50">
+<meta name="color-scheme" content="light dark">
+<title>ثبت — اختبار حفظ القرآن من البيانات المحلية</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230e6b5c'/%3E%3Ctext x='50' y='72' font-size='60' text-anchor='middle' fill='white' font-family='serif'%3Eث%3C/text%3E%3C/svg%3E">
+
+<script>
+(function(){
+  var theme = 'light';
+  try {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    var saved = {};
+    try { saved = JSON.parse(localStorage.getItem('thabbit.settings.v1') || '{}'); } catch(e){}
+    var c = saved.theme || 'auto';
+    if (c === 'auto') {
+      if (tg && tg.colorScheme) theme = tg.colorScheme;
+      else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) theme = 'dark';
+    } else theme = c;
+  } catch(e) {}
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.style.backgroundColor = theme === 'dark' ? '#0f151c' : '#faf7f0';
+})();
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Amiri+Quran&family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+/* ============================================================
+   1. RESET & TOUCH
+   ============================================================ */
+*,*::before,*::after{
+  box-sizing:border-box;margin:0;padding:0;
+  -webkit-tap-highlight-color:transparent !important;
+  -webkit-touch-callout:none;
+}
+html{
+  touch-action:manipulation;-webkit-text-size-adjust:100%;
+  background:#faf7f0;
+}
+html[data-theme="dark"]{background:#0f151c}
+body{
+  touch-action:manipulation;overscroll-behavior-y:none;
+  user-select:none;-webkit-user-select:none;
+}
+button{
+  -webkit-appearance:none;appearance:none;
+  font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;
+  font-size:inherit;
+}
+input{
+  font-family:inherit;-webkit-appearance:none;appearance:none;
+  outline:none;border:none;
+}
+
+/* ============================================================
+   2. TOKENS
+   ============================================================ */
+:root{
+  --bg:#faf7f0;--card:#fff;--text:#151515;--text-2:#4a453d;--text-3:#8b8375;
+  --border:#e8e0d0;--border-2:#f0eade;
+  --primary:#0e6b5c;--primary-2:#12917c;--primary-3:#1aa88f;
+  --primary-soft:#e3f1ee;--primary-glow:rgba(14,107,92,.15);
+  --gold:#b8860b;--gold-soft:#faf3e0;
+  --green:#0e6b5c;--red:#c0392b;
+  --shadow:0 4px 20px rgba(80,60,30,.08);
+  --shadow-lg:0 20px 60px rgba(80,60,30,.15);
+  --ease:cubic-bezier(.4,0,.2,1);
+  --ease-out:cubic-bezier(0,0,.2,1);
+  --radius:16px;--radius-sm:12px;--radius-lg:22px;
+  color-scheme:light;
+}
+html[data-theme="dark"]{
+  --bg:#0f151c;--card:#1a222c;--text:#eee9de;--text-2:#c9c2b6;--text-3:#8b95a3;
+  --border:#232c38;--border-2:#1c242e;
+  --primary:#2dd4bf;--primary-2:#5eead4;--primary-3:#99f6e4;
+  --primary-soft:#0d2b28;--primary-glow:rgba(45,212,191,.2);
+  --gold:#d4af37;--gold-soft:#2a2416;
+  --green:#12917c;--red:#e57373;
+  --shadow:0 4px 20px rgba(0,0,0,.4);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.6);
+  color-scheme:dark;
+}
+
+/* ============================================================
+   3. LAYOUT
+   ============================================================ */
+html,body{height:100%}
+body{
+  font-family:'Cairo',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;
+  overflow-x:hidden;transition:background-color .2s,color .2s;
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0);
+  padding-bottom:env(safe-area-inset-bottom,0);
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70' viewBox='0 0 70 70'%3E%3Cg fill='none' stroke='%230e6b5c' stroke-width='1'%3E%3Cpath d='M35 6 L41 29 L64 35 L41 41 L35 64 L29 41 L6 35 L29 29 Z'/%3E%3C/g%3E%3C/svg%3E");
+}
+html[data-theme="dark"] body::before{opacity:.05}
+
+.app{
+  position:relative;z-index:1;display:flex;flex-direction:column;
+  min-height:100vh;min-height:100dvh;
+  max-width:520px;margin:0 auto;width:100%;padding:0 14px;
+}
+
+/* ============================================================
+   4. TOPBAR
+   ============================================================ */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;padding:12px 0;height:56px;flex-shrink:0;
+}
+.brand{
+  display:flex;align-items:center;gap:10px;
+  font-size:17px;font-weight:800;letter-spacing:-.2px;
+}
+.brand-mark{
+  width:32px;height:32px;border-radius:10px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-3));
+  display:grid;place-items:center;color:#fff;font-size:17px;font-weight:700;
+  font-family:'Amiri',serif;
+  box-shadow:0 4px 14px -4px var(--primary);
+}
+.topbar-actions{display:flex;gap:2px}
+.icon-btn{
+  width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+  color:var(--text-2);transition:.15s;
+}
+.icon-btn:hover{background:var(--border);color:var(--text)}
+.icon-btn:active{transform:scale(.94)}
+.icon-btn svg{width:18px;height:18px}
+
+/* ============================================================
+   5. SCREENS
+   ============================================================ */
+.content{flex:1;padding:6px 0 20px;min-height:0}
+.screen{display:none;animation:fadeUp .3s var(--ease-out)}
+.screen.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* Screen head (back + title) */
+.screen-head{
+  display:flex;align-items:center;gap:12px;margin-bottom:16px;
+}
+.back-btn{
+  width:38px;height:38px;border-radius:11px;flex-shrink:0;
+  display:grid;place-items:center;color:var(--text-2);
+  background:var(--card);border:1px solid var(--border);
+  transition:.15s;
+}
+.back-btn:hover{border-color:var(--primary);color:var(--primary)}
+.back-btn:active{transform:scale(.94)}
+.back-btn svg{width:18px;height:18px}
+.head-info{flex:1;min-width:0}
+.head-info h2{font-size:18px;font-weight:700;margin-bottom:2px}
+.head-info p{font-size:12px;color:var(--text-3)}
+
+/* ============================================================
+   6. HOME
+   ============================================================ */
+.home-hero{
+  position:relative;border-radius:var(--radius-lg);overflow:hidden;
+  background:linear-gradient(135deg,#0a5c50 0%,#0e6b5c 50%,#12917c 100%);
+  color:#fff;padding:36px 24px;text-align:center;margin-bottom:20px;
+  box-shadow:0 16px 40px -16px rgba(14,107,92,.4);
+}
+.home-hero::before{
+  content:'';position:absolute;inset:0;opacity:.09;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70' viewBox='0 0 70 70'%3E%3Cg fill='none' stroke='white' stroke-width='1'%3E%3Cpath d='M35 6 L41 29 L64 35 L41 41 L35 64 L29 41 L6 35 L29 29 Z'/%3E%3Ccircle cx='35' cy='35' r='12'/%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-inner{position:relative;z-index:1}
+.hero-icon{
+  width:56px;height:56px;margin:0 auto 14px;
+  border-radius:50%;background:rgba(255,255,255,.15);
+  backdrop-filter:blur(8px);
+  display:grid;place-items:center;
+  border:1px solid rgba(255,255,255,.2);
+}
+.hero-icon svg{width:26px;height:26px}
+.home-hero h1{font-family:'Amiri',serif;font-size:28px;font-weight:700;margin-bottom:6px;letter-spacing:-.3px}
+.home-hero p{font-size:13px;opacity:.85;line-height:1.6;max-width:280px;margin:0 auto}
+
+.start-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:16px 20px;border-radius:14px;
+  background:var(--primary);color:#fff;
+  font-size:16px;font-weight:700;letter-spacing:-.2px;
+  box-shadow:0 10px 26px -8px var(--primary-glow);
+  transition:.2s;margin-bottom:16px;
+}
+.start-btn:hover{background:var(--primary-2);transform:translateY(-1px)}
+.start-btn:active{transform:translateY(0) scale(.98)}
+.start-btn svg{width:20px;height:20px}
+
+.info-row{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  margin-top:16px;
+}
+.info-item{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:12px 8px;text-align:center;
+  box-shadow:var(--shadow);
+}
+.info-item strong{
+  display:block;font-size:18px;font-weight:800;color:var(--primary);
+  line-height:1.1;margin-bottom:2px;
+}
+.info-item span{font-size:10.5px;color:var(--text-3);font-weight:500}
+
+/* ============================================================
+   7. TYPE PICKER
+   ============================================================ */
+.type-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+.type-card{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:18px 12px;background:var(--card);
+  border:1.5px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);transition:.2s;
+  text-align:center;
+}
+.type-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+.type-card:active{transform:translateY(0) scale(.97)}
+.type-card .tc-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:var(--primary-soft);color:var(--primary);
+  display:grid;place-items:center;
+}
+.type-card .tc-icon svg{width:22px;height:22px}
+.type-card h3{font-size:15px;font-weight:700;margin-bottom:2px}
+.type-card p{font-size:11px;color:var(--text-3)}
+
+/* ============================================================
+   8. SPECIFIC PICKER
+   ============================================================ */
+.num-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));
+  gap:8px;
+}
+.num-cell{
+  aspect-ratio:1;display:grid;place-items:center;
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);
+  font-size:14px;font-weight:700;color:var(--text);
+  transition:.15s;
+}
+.num-cell:hover{border-color:var(--primary);color:var(--primary);transform:translateY(-2px)}
+.num-cell:active{transform:translateY(0) scale(.95)}
+
+.surah-list{display:flex;flex-direction:column;gap:2px}
+.surah-row{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border-radius:11px;
+  transition:.15s;text-align:right;width:100%;
+}
+.surah-row:hover{background:var(--card)}
+.surah-row:active{background:var(--border-2);transform:scale(.99)}
+.sr-num{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:var(--card);color:var(--text-3);
+  display:grid;place-items:center;font-size:12.5px;font-weight:700;
+  border:1px solid var(--border);
+}
+.sr-info{flex:1;min-width:0}
+.sr-name{
+  font-family:'Amiri',serif;font-size:15.5px;font-weight:700;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;
+}
+.sr-meta{font-size:10.5px;color:var(--text-3);margin-top:1px;display:block}
+
+/* Ayah range picker */
+.range-form{
+  display:flex;flex-direction:column;gap:14px;
+}
+.form-group{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;
+}
+.form-label{
+  display:block;font-size:12.5px;font-weight:700;color:var(--text-2);
+  margin-bottom:8px;
+}
+.form-select,.form-input{
+  width:100%;padding:11px 14px;border-radius:10px;
+  background:var(--border-2);color:var(--text);
+  font-size:14px;border:1.5px solid transparent;
+  transition:.15s;
+}
+.form-select:focus,.form-input:focus{
+  border-color:var(--primary);background:var(--card);
+}
+.form-select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:left 14px center;
+  padding-left:38px;appearance:none;-webkit-appearance:none;
+}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.submit-btn{
+  width:100%;padding:14px;border-radius:12px;
+  background:var(--primary);color:#fff;font-size:14.5px;font-weight:700;
+  box-shadow:0 8px 20px -6px var(--primary-glow);
+  transition:.15s;margin-top:6px;
+}
+.submit-btn:hover{background:var(--primary-2)}
+.submit-btn:active{transform:scale(.98)}
+
+/* ============================================================
+   9. TEST
+   ============================================================ */
+.test-head{
+  display:flex;align-items:center;gap:12px;margin-bottom:12px;
+}
+.scope-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;color:var(--primary);
+  padding:3px 10px;border-radius:20px;
+  background:var(--primary-soft);
+  margin-bottom:4px;
+}
+.test-info{flex:1;min-width:0}
+.progress-mini{
+  font-size:11.5px;color:var(--text-3);font-weight:600;
+}
+.end-btn{
+  font-size:12px;font-weight:700;color:var(--primary);
+  padding:7px 12px;border-radius:10px;
+  background:var(--primary-soft);
+  transition:.15s;
+}
+.end-btn:hover{background:color-mix(in srgb,var(--primary) 20%,transparent)}
+.end-btn:active{transform:scale(.96)}
+
+/* Question card */
+.q-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius-lg);box-shadow:var(--shadow);
+  padding:20px 18px;margin-bottom:14px;
+  position:relative;overflow:hidden;
+  animation:fadeUp .3s var(--ease-out);
+}
+.q-card::before{
+  content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;
+  background:radial-gradient(circle,var(--primary-soft),transparent 70%);
+  opacity:.5;pointer-events:none;
+}
+.q-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10.5px;font-weight:700;color:var(--primary);
+  padding:4px 11px;border-radius:20px;
+  background:var(--primary-soft);
+  margin-bottom:12px;
+  position:relative;z-index:1;
+}
+.q-badge svg{width:12px;height:12px}
+
+.ayah-text{
+  font-family:'Amiri Quran','Amiri',serif;
+  font-size:20px;line-height:2;
+  color:var(--text);direction:rtl;
+  text-align:center;padding:14px 6px;
+  position:relative;z-index:1;
+}
+
+.q-prompt{
+  text-align:center;font-size:13px;color:var(--text-3);
+  font-weight:600;margin-bottom:14px;
+  padding-top:12px;border-top:1px dashed var(--border-2);
+  position:relative;z-index:1;
+}
+
+.choices{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  position:relative;z-index:1;
+}
+.choice-btn{
+  padding:13px 10px;border-radius:var(--radius-sm);
+  background:var(--border-2);color:var(--text);
+  border:1.5px solid transparent;
+  font-family:'Amiri',serif;font-size:15px;font-weight:700;
+  transition:.2s;
+}
+.choice-btn:hover:not(.disabled){background:var(--primary-soft);color:var(--primary)}
+.choice-btn:active:not(.disabled){transform:scale(.97)}
+.choice-btn.correct{
+  background:var(--green);color:#fff;border-color:var(--green);
+  animation:pop .3s ease;
+}
+.choice-btn.wrong{
+  background:var(--red);color:#fff;border-color:var(--red);
+  animation:shake .4s ease;
+}
+.choice-btn.reveal-correct{
+  background:var(--green);color:#fff;border-color:var(--green);
+  opacity:.85;
+}
+.choice-btn.disabled{cursor:not-allowed;opacity:.75}
+@keyframes pop{0%{transform:scale(.9)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%,60%{transform:translateX(-5px)}
+  40%,80%{transform:translateX(5px)}
+}
+
+/* Result inside card (after answering) */
+.answer-reveal{
+  text-align:center;margin-top:16px;
+  padding:12px 14px;border-radius:var(--radius-sm);
+  background:var(--primary-soft);
+  animation:fadeUp .3s var(--ease-out);
+}
+.answer-reveal .ar-label{font-size:11.5px;color:var(--text-3);margin-bottom:3px;font-weight:600}
+.answer-reveal .ar-value{
+  font-family:'Amiri',serif;font-size:17px;font-weight:700;
+  color:var(--primary);
+}
+.answer-reveal.wrong{background:color-mix(in srgb,var(--red) 12%,transparent)}
+.answer-reveal.wrong .ar-value{color:var(--red)}
+
+/* Navigation */
+.nav-bar{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;
+  animation:fadeUp .3s var(--ease-out);
+}
+.nav-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px;border-radius:var(--radius);
+  background:var(--card);border:1.5px solid var(--border);
+  color:var(--text);font-size:13.5px;font-weight:700;
+  box-shadow:var(--shadow);transition:.15s;
+}
+.nav-btn:hover:not(:disabled){border-color:var(--primary);color:var(--primary)}
+.nav-btn:active:not(:disabled){transform:scale(.97)}
+.nav-btn:disabled{opacity:.4;cursor:not-allowed}
+.nav-btn svg{width:16px;height:16px}
+.nav-btn.primary{
+  background:var(--primary);color:#fff;border-color:var(--primary);
+}
+.nav-btn.primary:hover:not(:disabled){background:var(--primary-2);color:#fff;border-color:var(--primary-2)}
+
+/* Loading */
+.loading{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 20px;gap:14px;
+}
+.spinner{
+  width:32px;height:32px;border:3px solid var(--border);
+  border-top-color:var(--primary);border-radius:50%;
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading p{color:var(--text-3);font-size:13px;font-weight:500}
+
+/* ============================================================
+   10. RESULT
+   ============================================================ */
+.result-hero{
+  text-align:center;padding:24px 20px;
+  border-radius:var(--radius-lg);margin-bottom:16px;
+  background:linear-gradient(135deg,var(--primary-soft),color-mix(in srgb,var(--primary-soft) 40%,var(--card)));
+  position:relative;overflow:hidden;
+}
+.result-circle{
+  width:110px;height:110px;border-radius:50%;margin:0 auto 14px;
+  background:conic-gradient(var(--primary) var(--score-deg,0deg), var(--border) 0deg);
+  display:grid;place-items:center;position:relative;
+  animation:rc .6s var(--ease-out);
+}
+@keyframes rc{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.result-circle::after{
+  content:'';position:absolute;inset:8px;border-radius:50%;background:var(--card);
+}
+.result-score{position:relative;z-index:1;text-align:center}
+.result-score strong{display:block;font-size:30px;font-weight:800;color:var(--primary);line-height:1}
+.result-score span{font-size:10.5px;color:var(--text-3);margin-top:2px;display:block;font-weight:600}
+.result-title{font-family:'Amiri',serif;font-size:20px;font-weight:700;margin-bottom:4px}
+.result-subtitle{font-size:12.5px;color:var(--text-3)}
+
+.result-list{margin:16px 0;max-height:280px;overflow-y:auto}
+.result-list::-webkit-scrollbar{width:4px}
+.result-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.result-item{
+  padding:11px 14px;margin-bottom:6px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;display:flex;gap:10px;align-items:flex-start;
+}
+.result-mark{
+  width:22px;height:22px;border-radius:6px;flex-shrink:0;
+  display:grid;place-items:center;font-size:11px;font-weight:700;
+}
+.result-mark.yes{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}
+.result-mark.no{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}
+.result-body{flex:1;min-width:0}
+.result-text{
+  font-family:'Amiri',serif;font-size:14px;line-height:1.8;
+  color:var(--text);margin-bottom:3px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.result-ref{font-size:10.5px;color:var(--text-3);font-weight:600}
+
+.result-actions{display:flex;flex-direction:column;gap:8px}
+.action-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px 18px;border-radius:12px;
+  font-size:14px;font-weight:700;transition:.15s;
+}
+.action-btn:active{transform:scale(.97)}
+.action-btn.primary{background:var(--primary);color:#fff}
+.action-btn.primary:hover{background:var(--primary-2)}
+.action-btn.secondary{background:var(--card);color:var(--text-2);border:1.5px solid var(--border)}
+.action-btn.secondary:hover{border-color:var(--primary);color:var(--primary)}
+.action-btn svg{width:16px;height:16px}
+
+/* ============================================================
+   11. MODALS & TOAST
+   ============================================================ */
+.overlay{
+  position:fixed;inset:0;background:rgba(10,20,15,.5);
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  z-index:200;opacity:0;pointer-events:none;transition:.25s;
+}
+.overlay.show{opacity:1;pointer-events:all}
+.modal{
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-46%) scale(.96);
+  z-index:210;background:var(--card);
+  border-radius:var(--radius-lg);width:min(460px,94vw);max-height:88vh;
+  display:flex;flex-direction:column;
+  box-shadow:var(--shadow-lg);
+  opacity:0;pointer-events:none;transition:.3s var(--ease);
+  border:1px solid var(--border);overflow:hidden;
+}
+.modal.show{opacity:1;pointer-events:all;transform:translate(-50%,-50%) scale(1)}
+.modal-head{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-head h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.modal-head h3 svg{width:17px;height:17px;color:var(--primary)}
+.modal-body{padding:20px;overflow-y:auto;flex:1}
+.close-btn{
+  width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+  color:var(--text-2);transition:.15s;
+}
+.close-btn:hover{background:var(--border);color:var(--text)}
+.close-btn svg{width:17px;height:17px}
+
+.setting{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:13px 0;border-bottom:1px solid var(--border-2);
+}
+.setting:last-child{border-bottom:none}
+.setting-info{flex:1;min-width:0;padding-left:12px}
+.setting-info span{font-size:14px;font-weight:600;display:block}
+.setting-info small{font-size:11.5px;color:var(--text-3);display:block;margin-top:2px}
+.toggle{
+  width:44px;height:26px;border-radius:26px;background:var(--border);
+  position:relative;transition:.25s;flex-shrink:0;
+}
+.toggle::after{
+  content:'';position:absolute;top:3px;right:3px;
+  width:20px;height:20px;border-radius:50%;background:#fff;
+  transition:.25s;box-shadow:0 2px 6px rgba(0,0,0,.2);
+}
+.toggle.on{background:var(--primary)}
+.toggle.on::after{right:21px}
+.segmented{
+  display:flex;gap:3px;background:var(--border-2);padding:3px;border-radius:10px;
+}
+.segmented button{
+  padding:7px 10px;border-radius:7px;font-size:12px;font-weight:500;
+  color:var(--text-3);transition:.15s;flex:1;
+}
+.segmented button.active{
+  background:var(--card);color:var(--primary);font-weight:700;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+
+.help-row{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:13px 0;border-bottom:1px solid var(--border-2);
+}
+.help-row:last-child{border-bottom:none}
+.help-icon{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:var(--primary-soft);color:var(--primary);
+  display:grid;place-items:center;
+}
+.help-icon svg{width:17px;height:17px}
+.help-content h4{font-size:13.5px;font-weight:700;margin-bottom:3px}
+.help-content p{font-size:12px;color:var(--text-3);line-height:1.65}
+
+.toast{
+  position:fixed;top:72px;left:50%;
+  transform:translateX(-50%) translateY(-20px);
+  background:var(--text);color:var(--bg);
+  padding:10px 18px;border-radius:10px;
+  font-size:13px;font-weight:600;
+  z-index:400;opacity:0;pointer-events:none;
+  transition:.3s var(--ease);
+  box-shadow:0 12px 32px rgba(0,0,0,.25);
+  white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.confetti{
+  position:fixed;width:8px;height:8px;pointer-events:none;z-index:300;
+  animation:cf 3s ease-out forwards;
+}
+@keyframes cf{
+  0%{transform:translateY(-20px) rotate(0);opacity:1}
+  100%{transform:translateY(100vh) rotate(720deg);opacity:0}
+}
+
+/* ============================================================
+   12. RESPONSIVE
+   ============================================================ */
+@media(max-width:400px){
+  .home-hero{padding:28px 18px}
+  .home-hero h1{font-size:24px}
+  .type-grid{gap:8px}
+  .type-card{padding:14px 10px}
+  .ayah-text{font-size:18px}
+  .num-grid{grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    transition-duration:.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">ث</div>
+      <span>ثبت</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="helpBtn" aria-label="مساعدة">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      </button>
+      <button class="icon-btn" id="themeBtn" aria-label="المظهر">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"></svg>
+      </button>
+      <button class="icon-btn" id="settingsBtn" aria-label="الإعدادات">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="content">
+    <!-- ═══ HOME ═══ -->
+    <section id="screen-home" class="screen active">
+      <div class="home-hero">
+        <div class="hero-inner">
+          <div class="hero-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          </div>
+          <h1>ثبّت حفظك</h1>
+          <p>اختبر حفظك للقرآن الكريم — عرّف السورة، ثم تنقّل بين الآيات</p>
+        </div>
+      </div>
+
+      <button class="start-btn" id="startBtn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        ابدأ الاختبار
+      </button>
+
+      <div class="info-row">
+        <div class="info-item">
+          <strong id="homeTests">0</strong>
+          <span>اختبار</span>
+        </div>
+        <div class="info-item">
+          <strong id="homeAyahs">0</strong>
+          <span>آية</span>
+        </div>
+        <div class="info-item">
+          <strong id="homeAcc">0%</strong>
+          <span>دقة</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ TYPE PICKER ═══ -->
+    <section id="screen-type" class="screen">
+      <div class="screen-head">
+        <button class="back-btn" data-nav="home" type="button" aria-label="رجوع">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <div class="head-info">
+          <h2>اختر النطاق</h2>
+          <p>حدّد ما تريد الاختبار فيه</p>
+        </div>
+      </div>
+      <div class="type-grid" id="typeGrid"></div>
+    </section>
+
+    <!-- ═══ SPECIFIC PICKER ═══ -->
+    <section id="screen-pick" class="screen">
+      <div class="screen-head">
+        <button class="back-btn" id="pickBack" type="button" aria-label="رجوع">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <div class="head-info">
+          <h2 id="pickTitle">—</h2>
+          <p id="pickSub">—</p>
+        </div>
+      </div>
+      <div id="pickBody"></div>
+    </section>
+
+    <!-- ═══ TEST ═══ -->
+    <section id="screen-test" class="screen">
+      <div class="test-head">
+        <button class="back-btn" id="testBack" type="button" aria-label="خروج">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div class="test-info">
+          <div class="scope-badge" id="testScope">—</div>
+          <div class="progress-mini" id="testProgress">—</div>
+        </div>
+        <button class="end-btn" id="endBtn" type="button">إنهاء</button>
+      </div>
+      <div id="testBody"></div>
+    </section>
+
+    <!-- ═══ RESULT ═══ -->
+    <section id="screen-result" class="screen">
+      <div class="result-hero">
+        <div class="result-circle" id="resultCircle">
+          <div class="result-score">
+            <strong id="resultScore">0</strong>
+            <span id="resultTotal">من 0</span>
+          </div>
+        </div>
+        <div class="result-title" id="resultTitle">—</div>
+        <div class="result-subtitle" id="resultSubtitle">—</div>
+      </div>
+      <div class="result-list" id="resultList"></div>
+      <div class="result-actions">
+        <button class="action-btn primary" id="newTestBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          اختبار جديد
+        </button>
+        <button class="action-btn secondary" id="shareBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>
+          مشاركة النتيجة
+        </button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="overlay" id="overlay"></div>
+
+<!-- HELP MODAL -->
+<div class="modal" id="helpModal" role="dialog">
+  <div class="modal-head">
+    <h3>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      كيف يعمل ثبت؟
+    </h3>
+    <button class="close-btn" data-close type="button" aria-label="إغلاق">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="help-row">
+      <div class="help-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </div>
+      <div class="help-content">
+        <h4>١. ابدأ الاختبار</h4>
+        <p>اضغط "ابدأ الاختبار" ثم اختر النطاق (سورة، جزء، حزب، صفحة...).</p>
+      </div>
+    </div>
+    <div class="help-row">
+      <div class="help-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      </div>
+      <div class="help-content">
+        <h4>٢. عرّف السورة</h4>
+        <p>تظهر آية عشوائية، اختر السورة الصحيحة من ٤ خيارات.</p>
+      </div>
+    </div>
+    <div class="help-row">
+      <div class="help-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </div>
+      <div class="help-content">
+        <h4>٣. تنقّل بين الآيات</h4>
+        <p>بعد الإجابة، تظهر أزرار السابق والتالي للتنقل بين الآيات في النطاق.</p>
+      </div>
+    </div>
+    <div class="help-row">
+      <div class="help-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <div class="help-content">
+        <h4>٤. أنهِ وشاهد نتيجتك</h4>
+        <p>في أي وقت اضغط "إنهاء" لترى نتيجتك التفصيلية.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal" id="settingsModal" role="dialog">
+  <div class="modal-head">
+    <h3>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>
+      الإعدادات
+    </h3>
+    <button class="close-btn" data-close type="button" aria-label="إغلاق">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="modal-body">
+    <div class="setting" style="display:block">
+      <div class="setting-info" style="margin-bottom:10px;padding:0">
+        <span>المظهر</span>
+        <small>اتبع تيليغرام أو اختر يدوياً</small>
+      </div>
+      <div class="segmented" id="themeSeg">
+        <button data-v="auto" type="button">⚡ تلقائي</button>
+        <button data-v="light" type="button">☀ فاتح</button>
+        <button data-v="dark" type="button">🌙 داكن</button>
+      </div>
+    </div>
+    <div class="setting">
+      <div class="setting-info"><span>الاهتزاز</span><small>عند الإجابة والتنقل</small></div>
+      <button class="toggle on" id="hapticToggle" role="switch" aria-checked="true"></button>
+    </div>
+    <div class="setting">
+      <div class="setting-info"><span>عرض رقم الآية</span><small>إظهار رقم الآية في النطاق</small></div>
+      <button class="toggle on" id="showRefToggle" role="switch" aria-checked="true"></button>
+    </div>
+    <div class="setting" style="justify-content:center;padding-top:16px">
+      <button id="resetStatsBtn" type="button" style="padding:9px 16px;background:var(--border-2);border-radius:10px;color:var(--text-2);font-size:12.5px;font-weight:600">إعادة تعيين الإحصائيات</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const CONFIG = Object.freeze({
+  DATA_DIR: './data',
+  BOT_URL: 'https://t.me/NourGameBot/nour',
+  TIMEOUT: 15000,
+  STORAGE: { SETTINGS: 'thabbit.settings.v1', STATS: 'thabbit.stats.v1' },
+  DEFAULTS: { theme: 'auto', haptic: true, showRef: true },
+  DEFAULT_STATS: { tests: 0, ayahs: 0, correct: 0, streak: 0, lastDay: '' },
+  TYPES: [
+    { id:'surah',  name:'سورة كاملة', desc:'١١٤ سورة',     icon:'book' },
+    { id:'juz',    name:'جزء',         desc:'٣٠ جزءاً',    icon:'grid' },
+    { id:'hizb',   name:'حزب',         desc:'٦٠ حزباً',    icon:'layers' },
+    { id:'rub',    name:'ربع',         desc:'٢٤٠ ربعاً',   icon:'clock' },
+    { id:'page',   name:'صفحة',        desc:'٦٠٤ صفحة',    icon:'file' },
+    { id:'ayahRange', name:'من آية إلى آية', desc:'نطاق مخصص', icon:'target' },
+    { id:'all',    name:'عشوائي',      desc:'من كل القرآن', icon:'shuffle' },
+  ],
+  ICONS: {
+    book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+    grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    layers: '<path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>',
+    clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+    file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>',
+    target: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+    shuffle: '<path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="M4 4l5 5"/>',
+  },
+});
+
+/* ============================================================
+   STORAGE
+   ============================================================ */
+const Storage = {
+  ok: (function(){ try{ localStorage.setItem('_t','1'); localStorage.removeItem('_t'); return true; }catch(e){ return false; } })(),
+  get(k, fb=null){ if(!this.ok) return fb; try{ const v=localStorage.getItem(k); return v?JSON.parse(v):fb; }catch(e){ return fb; } },
+  set(k, v){ if(!this.ok) return; try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} },
+};
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+const U = {
+  $: (s, r=document) => r.querySelector(s),
+  $$: (s, r=document) => Array.from(r.querySelectorAll(s)),
+  esc(s){ return s==null?'':String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
+  ar(n){ return String(n).replace(/\d/g, d=>'٠١٢٣٤٥٦٧٨٩'[d]); },
+  shuffle(a){ const x=a.slice(); for(let i=x.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [x[i],x[j]]=[x[j],x[i]]; } return x; },
+  today(){ const d=new Date(); return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`; },
+};
+
+/* ============================================================
+   TELEGRAM
+   ============================================================ */
+const TG = {
+  app: null, ok: false, user: null,
+  init(){
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if(!tg) return;
+    this.app = tg; this.ok = true;
+    try{
+      tg.ready(); tg.expand(); tg.enableClosingConfirmation?.();
+      tg.setHeaderColor?.('secondary_bg_color');
+      tg.onEvent?.('themeChanged', () => { if(App.settings.theme==='auto') UI.applyTheme(); });
+      tg.BackButton?.onClick(() => this.onBack());
+      this.user = (tg.initDataUnsafe && tg.initDataUnsafe.user) || null;
+    }catch(e){ console.warn(e); }
+  },
+  get theme(){ return (this.app && this.app.colorScheme) || 'light'; },
+  showBack(show){ try{ if(show) this.app?.BackButton?.show?.(); else this.app?.BackButton?.hide?.(); }catch(e){} },
+  onBack(){
+    if(UI.anyModalOpen()){ UI.closeModals(); return; }
+    const active = U.$('.screen.active');
+    if(!active) return;
+    if(active.id === 'screen-test') App.cancelTest();
+    else if(active.id === 'screen-pick') Screens.go('type');
+    else if(active.id === 'screen-type') Screens.go('home');
+    else if(active.id === 'screen-result') Screens.go('home');
+  },
+  haptic(type){
+    if(!this.ok || !App.settings.haptic) return;
+    const fb = this.app.HapticFeedback; if(!fb) return;
+    try{
+      if(type==='success') fb.notificationOccurred('success');
+      else if(type==='error') fb.notificationOccurred('error');
+      else if(type==='light') fb.impactOccurred('light');
+      else if(type==='medium') fb.impactOccurred('medium');
+    }catch(e){}
+  },
+  share(text){
+    const url = 'https://t.me/share/url?url=' + encodeURIComponent(CONFIG.BOT_URL) + '&text=' + encodeURIComponent(text);
+    if(this.ok && this.app.openTelegramLink){
+      try{ this.app.openTelegramLink(url); return true; }catch(e){}
+    }
+    return false;
+  },
+};
+
+/* ============================================================
+   NETWORK
+   ============================================================ */
+async function fetchJSON(url){
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), CONFIG.TIMEOUT);
+  try{
+    const res = await fetch(url, { signal: ctrl.signal });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const j = await res.json();
+    if(j.code !== 200) throw new Error(j.status || 'API');
+    return j.data;
+  } finally { clearTimeout(timer); }
+}
+
+/* ============================================================
+   LOCAL QURAN DATA
+   Reads the GitHub Pages data files from ./data.
+   No external Quran API is required.
+   ============================================================ */
+const Quran = {
+  cache: new Map(),
+  loaded: false,
+  verses: [],
+  byId: new Map(),
+  byChapter: new Map(),
+  pages: null,
+  surahs: [],
+  async load(){
+    if(this.loaded) return this;
+    const [versesText, navigationText, pages, surahs] = await Promise.all([
+      fetch(CONFIG.DATA_DIR + '/verses.jsonl').then(r => { if(!r.ok) throw new Error('verses.jsonl'); return r.text(); }),
+      fetch(CONFIG.DATA_DIR + '/ayah_navigation.jsonl').then(r => { if(!r.ok) throw new Error('ayah_navigation.jsonl'); return r.text(); }),
+      fetch(CONFIG.DATA_DIR + '/pages.json').then(r => { if(!r.ok) throw new Error('pages.json'); return r.json(); }),
+      fetch(CONFIG.DATA_DIR + '/surahs.json').then(r => { if(!r.ok) throw new Error('surahs.json'); return r.json(); })
+    ]);
+    const navById = new Map(navigationText.trim().split(/\n+/).filter(Boolean).map(line => {
+      const x = JSON.parse(line); return [x.id, x];
+    }));
+    this.verses = versesText.trim().split(/\n+/).filter(Boolean).map(line => {
+      const raw = JSON.parse(line);
+      const nav = raw.navigation || navById.get(raw.id) || {};
+      const surah = surahs.find(x => x.number === raw.chapter) || {};
+      const ayah = {
+        ...raw,
+        number: raw.global_ayah,
+        numberInSurah: raw.verse,
+        surah: { number: raw.chapter, name: surah.name_ar || `سورة ${raw.chapter}` }
+      };
+      this.byId.set(raw.id, ayah);
+      if(!this.byChapter.has(raw.chapter)) this.byChapter.set(raw.chapter, []);
+      this.byChapter.get(raw.chapter).push(ayah);
+      return ayah;
+    });
+    this.pages = pages.pages || {};
+    this.surahs = surahs.map(s => ({
+      ...s,
+      name: s.name_ar,
+      numberOfAyahs: s.verses_count
+    }));
+    this.loaded = true;
+    return this;
+  },
+  async surahList(){ await this.load(); return this.surahs; },
+  async surah(n){
+    await this.load();
+    const meta = this.surahs.find(s => s.number === +n);
+    return { number:+n, name:meta?.name_ar || `سورة ${n}`, ayahs:(this.byChapter.get(+n) || []) };
+  },
+  async juz(n){ await this.load(); return { ayahs:this.verses.filter(a => a.navigation?.juz === +n) }; },
+  async rub(n){ await this.load(); return { ayahs:this.verses.filter(a => a.navigation?.hizbQuarter === +n) }; },
+  async page(n){
+    await this.load();
+    const ids = this.pages[String(n)] || [];
+    return { ayahs:ids.map(x => this.byId.get(x.id)).filter(Boolean) };
+  }
+};
+
+/* ============================================================
+   APP STATE
+   ============================================================ */
+const App = {
+  settings: { ...CONFIG.DEFAULTS, ...(Storage.get(CONFIG.STORAGE.SETTINGS) || {}) },
+  stats:    { ...CONFIG.DEFAULT_STATS, ...(Storage.get(CONFIG.STORAGE.STATS) || {}) },
+  session: null,
+  lastResult: null,
+  surahs: null,
+
+  saveSettings(){ Storage.set(CONFIG.STORAGE.SETTINGS, this.settings); },
+  saveStats(){ Storage.set(CONFIG.STORAGE.STATS, this.stats); },
+
+  cancelTest(){
+    if(!this.session){ Screens.go('home'); return; }
+    if(confirm('هل تريد إنهاء الاختبار؟')){
+      this.session = null;
+      Screens.go('home');
+      TG.showBack(false);
+    }
+  },
+};
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+const Screens = {
+  go(name){
+    U.$$('.screen').forEach(s => s.classList.remove('active'));
+    const el = U.$('#screen-' + name);
+    if(el) el.classList.add('active');
+    if(name === 'home' || name === 'type') TG.showBack(false);
+    else TG.showBack(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+};
+
+/* ============================================================
+   HOME
+   ============================================================ */
+function renderHome(){
+  U.$('#homeTests').textContent = U.ar(App.stats.tests);
+  U.$('#homeAyahs').textContent = U.ar(App.stats.ayahs);
+  U.$('#homeAcc').textContent = App.stats.ayahs > 0
+    ? Math.round((App.stats.correct / App.stats.ayahs) * 100) + '%'
+    : '0%';
+}
+
+/* ============================================================
+   TYPE PICKER
+   ============================================================ */
+function renderTypePicker(){
+  const grid = U.$('#typeGrid');
+  grid.innerHTML = CONFIG.TYPES.map(t => `
+    <button class="type-card" data-type="${t.id}" type="button">
+      <div class="tc-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${CONFIG.ICONS[t.icon]}</svg>
+      </div>
+      <div>
+        <h3>${t.name}</h3>
+        <p>${t.desc}</p>
+      </div>
+    </button>
+  `).join('');
+
+  U.$$('.type-card').forEach(c => {
+    c.addEventListener('click', () => {
+      TG.haptic('light');
+      Picker.open(c.dataset.type);
+    });
+  });
+}
+
+/* ============================================================
+   SPECIFIC PICKER
+   ============================================================ */
+const Picker = {
+  type: null,
+  render(type){
+    this.type = type;
+    Screens.go('pick');
+
+    const titles = {
+      surah: { t: 'اختر سورة', s: 'السورة كاملة' },
+      juz:   { t: 'اختر جزءاً', s: '١ إلى ٣٠' },
+      hizb:  { t: 'اختر حزباً', s: '١ إلى ٦٠' },
+      rub:   { t: 'اختر ربعاً', s: '١ إلى ٢٤٠' },
+      page:  { t: 'اختر صفحة', s: '١ إلى ٦٠٤' },
+      ayahRange: { t: 'نطاق الآيات', s: 'اختر السورة والنطاق' },
+      all: { t: 'عشوائي', s: 'من كل القرآن' },
+    };
+    const info = titles[type] || { t: 'اختر', s: '' };
+    U.$('#pickTitle').textContent = info.t;
+    U.$('#pickSub').textContent = info.s;
+
+    const body = U.$('#pickBody');
+    body.innerHTML = '';
+
+    if(type === 'surah') this.renderSurahList(body);
+    else if(type === 'ayahRange') this.renderAyahRange(body);
+    else if(type === 'juz') this.renderNumbers(body, 30);
+    else if(type === 'hizb') this.renderNumbers(body, 60);
+    else if(type === 'rub') this.renderNumbers(body, 240);
+    else if(type === 'page') this.renderNumbers(body, 604);
+    else if(type === 'all') this.startRandom();
+  },
+
+  renderNumbers(container, max){
+    let html = '<div class="num-grid">';
+    for(let i=1;i<=max;i++){
+      html += `<button class="num-cell" data-n="${i}" type="button">${U.ar(i)}</button>`;
+    }
+    html += '</div>';
+    container.innerHTML = html;
+    U.$$(container, '.num-cell').forEach(b => {
+      b.addEventListener('click', () => {
+        TG.haptic('light');
+        Session.start(this.type, +b.dataset.n);
+      });
+    });
+  },
+
+  async renderSurahList(container){
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>جاري التحميل...</p></div>';
+    try{
+      if(!App.surahs) App.surahs = await Quran.surahList();
+      const html = '<div class="surah-list">' + App.surahs.map(s => `
+        <button class="surah-row" data-n="${s.number}" type="button">
+          <span class="sr-num">${U.ar(s.number)}</span>
+          <span class="sr-info">
+            <span class="sr-name">${U.esc(s.name)}</span>
+            <span class="sr-meta">${s.numberOfAyahs} آيات • ${s.revelationType === 'Meccan' ? 'مكية' : 'مدنية'}</span>
+          </span>
+        </button>
+      `).join('') + '</div>';
+      container.innerHTML = html;
+      U.$$(container, '.surah-row').forEach(b => {
+        b.addEventListener('click', () => {
+          TG.haptic('light');
+          Session.start('surah', +b.dataset.n);
+        });
+      });
+    }catch(e){
+      container.innerHTML = '<div class="loading"><p>تعذّر التحميل</p></div>';
+    }
+  },
+
+  async renderAyahRange(container){
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>جاري التحميل...</p></div>';
+    try{
+      if(!App.surahs) App.surahs = await Quran.surahList();
+      container.innerHTML = `
+        <div class="range-form">
+          <div class="form-group">
+            <label class="form-label">السورة</label>
+            <select class="form-select" id="rangeSurah">
+              ${App.surahs.map(s => `<option value="${s.number}">${U.esc(s.name)} — ${s.numberOfAyahs} آيات</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">من الآية</label>
+            <div class="form-row">
+              <input type="number" class="form-input" id="rangeFrom" value="1" min="1">
+              <input type="number" class="form-input" id="rangeTo" value="5" min="1">
+            </div>
+          </div>
+          <button class="submit-btn" id="rangeStart" type="button">ابدأ الاختبار</button>
+        </div>
+      `;
+
+      const startBtn = U.$('#rangeStart');
+      startBtn.addEventListener('click', async () => {
+        const surah = +U.$('#rangeSurah').value;
+        const from = Math.max(1, +U.$('#rangeFrom').value || 1);
+        const to = Math.max(from, +U.$('#rangeTo').value || from);
+        TG.haptic('light');
+        Session.start('ayahRange', { surah, from, to });
+      });
+    }catch(e){
+      container.innerHTML = '<div class="loading"><p>تعذّر التحميل</p></div>';
+    }
+  },
+
+  open(type){
+    Picker.render(type);
+  },
+
+  startRandom(){
+    Session.start('all', null);
+  },
+};
+
+/* ============================================================
+   SESSION (TEST)
+   ============================================================ */
+const Session = {
+  async start(type, param){
+    Screens.go('test');
+    U.$('#testBody').innerHTML = '<div class="loading"><div class="spinner"></div><p>جاري التحضير...</p></div>';
+    U.$('#testScope').textContent = '—';
+    U.$('#testProgress').textContent = '—';
+
+    try{
+      const scope = await this.buildScope(type, param);
+      if(!scope || !scope.ayahs.length) throw new Error('لا توجد آيات');
+
+      App.session = {
+        scope,
+        index: 0,
+        questions: [],           // results of each ayah question
+        currentAnswered: false,
+        currentChosen: null,
+      };
+
+      Test.render();
+    }catch(e){
+      console.error(e);
+      Screens.go('home');
+      UI.toast('تعذّر تحضير الاختبار');
+    }
+  },
+
+  async buildScope(type, param){
+    if(type === 'surah'){
+      const d = await Quran.surah(param);
+      return {
+        type, label: d.name,
+        askSurah: false,
+        surahInfo: { number: d.number, name: d.name },
+        ayahs: d.ayahs.map(a => ({ ...a, surah: { number: d.number, name: d.name } })),
+      };
+    }
+    if(type === 'juz'){
+      const d = await Quran.juz(param);
+      return { type, label: `الجزء ${U.ar(param)}`, askSurah: true, ayahs: d.ayahs };
+    }
+    if(type === 'hizb'){
+      // حزب = ربعان متتاليان
+      const r1 = (param - 1) * 2 + 1;
+      const r2 = r1 + 1;
+      const [a, b] = await Promise.all([Quran.rub(r1), Quran.rub(r2)]);
+      const seen = new Set();
+      const ayahs = [...a.ayahs, ...b.ayahs].filter(x => {
+        if(seen.has(x.number)) return false;
+        seen.add(x.number);
+        return true;
+      });
+      return { type, label: `الحزب ${U.ar(param)}`, askSurah: true, ayahs };
+    }
+    if(type === 'rub'){
+      const d = await Quran.rub(param);
+      return { type, label: `الربع ${U.ar(param)}`, askSurah: true, ayahs: d.ayahs };
+    }
+    if(type === 'page'){
+      const d = await Quran.page(param);
+      return { type, label: `الصفحة ${U.ar(param)}`, askSurah: true, ayahs: d.ayahs };
+    }
+    if(type === 'ayahRange'){
+      const d = await Quran.surah(param.surah);
+      const ayahs = d.ayahs
+        .filter(a => a.numberInSurah >= param.from && a.numberInSurah <= param.to)
+        .map(a => ({ ...a, surah: { number: d.number, name: d.name } }));
+      return {
+        type, label: `${d.name} • ${U.ar(param.from)}-${U.ar(param.to)}`,
+        askSurah: false,
+        surahInfo: { number: d.number, name: d.name },
+        ayahs,
+      };
+    }
+    if(type === 'all'){
+      const juz = Math.floor(Math.random() * 30) + 1;
+      const d = await Quran.juz(juz);
+      return { type, label: `عشوائي من الجزء ${U.ar(juz)}`, askSurah: true, ayahs: d.ayahs };
+    }
+    return null;
+  },
+};
+
+/* ============================================================
+   TEST
+   ============================================================ */
+const Test = {
+  render(){
+    const s = App.session;
+    if(!s) return;
+
+    U.$('#testScope').textContent = s.scope.label;
+    this.renderProgress();
+    this.renderCurrent();
+  },
+
+  renderProgress(){
+    const s = App.session;
+    const answered = s.questions.length;
+    const total = s.scope.ayahs.length;
+    U.$('#testProgress').textContent = total > 0
+      ? `${U.ar(answered)} / ${U.ar(total)} آية`
+      : '—';
+  },
+
+  renderCurrent(){
+    const s = App.session;
+    const ayah = s.scope.ayahs[s.index];
+    if(!ayah) return;
+
+    const body = U.$('#testBody');
+    const askSurah = s.scope.askSurah;
+    const alreadyAnswered = s.currentAnswered;
+
+    if(askSurah && !alreadyAnswered){
+      // عرض السؤال
+      this.renderQuestion(body, ayah);
+    } else {
+      // عرض الإجابة + التنقل
+      this.renderAnswer(body, ayah);
+    }
+  },
+
+  renderQuestion(container, ayah){
+    const s = App.session;
+    const choices = this.buildChoices(ayah.surah.number);
+    s.currentChoices = choices;
+
+    container.innerHTML = `
+      <div class="q-card">
+        <div class="q-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+          ${App.settings.showRef ? `الآية ${U.ar(ayah.numberInSurah)}` : 'من أي سورة؟'}
+        </div>
+        <div class="ayah-text">${U.esc(ayah.text)}</div>
+        <div class="q-prompt">${App.settings.showRef ? 'من أي سورة هذه الآية؟' : 'حدّد السورة'}</div>
+        <div class="choices" id="choices">
+          ${choices.map(c => `<button class="choice-btn" data-n="${c.number}" type="button">${U.esc(c.name)}</button>`).join('')}
+        </div>
+      </div>
+    `;
+
+    U.$$('#choices .choice-btn').forEach(b => {
+      b.addEventListener('click', () => this.answer(+b.dataset.n, b));
+    });
+  },
+
+  buildChoices(correctNum){
+    const opts = new Set([correctNum]);
+    // أضف سور قريبة من النطاق
+    const scopeSurahs = new Set(App.session.scope.ayahs.map(a => a.surah.number));
+    const nearby = Array.from(scopeSurahs).filter(n => n !== correctNum);
+    const shuffledNearby = U.shuffle(nearby);
+    for(const n of shuffledNearby){
+      if(opts.size >= 4) break;
+      opts.add(n);
+    }
+    while(opts.size < 4){
+      opts.add(Math.floor(Math.random() * 114) + 1);
+    }
+    return U.shuffle(Array.from(opts).map(n => {
+      const s = App.surahs ? App.surahs.find(x => x.number === n) : null;
+      return { number: n, name: s ? s.name : `سورة ${n}` };
+    }));
+  },
+
+  answer(chosenNum, btn){
+    const s = App.session;
+    if(s.currentAnswered) return;
+
+    const ayah = s.scope.ayahs[s.index];
+    const correctNum = ayah.surah.number;
+    const isCorrect = chosenNum === correctNum;
+
+    s.currentAnswered = true;
+    s.currentChosen = chosenNum;
+
+    // تلوين
+    U.$$('#choices .choice-btn').forEach(b => {
+      b.classList.add('disabled');
+      const n = +b.dataset.n;
+      if(n === correctNum) b.classList.add('correct');
+      else if(n === chosenNum) b.classList.add('wrong');
+    });
+
+    // سجّل السؤال
+    s.questions.push({
+      index: s.index,
+      ayah,
+      chosen: chosenNum,
+      correct: isCorrect,
+    });
+
+    App.stats.ayahs++;
+    if(isCorrect) App.stats.correct++;
+    App.saveStats();
+
+    TG.haptic(isCorrect ? 'success' : 'error');
+
+    // بعد لحظة قصيرة، اعرض زر "التالي"
+    setTimeout(() => {
+      this.renderCurrent();
+    }, 900);
+  },
+
+  renderAnswer(container, ayah){
+    const s = App.session;
+    const q = s.questions[s.questions.length - 1];
+    const isCorrect = q && q.correct;
+    const isLast = s.index === s.scope.ayahs.length - 1;
+    const isFirst = s.index === 0;
+
+    const surahName = ayah.surah ? ayah.surah.name : '';
+
+    container.innerHTML = `
+      <div class="q-card">
+        <div class="q-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          ${surahName} • الآية ${U.ar(ayah.numberInSurah)}
+        </div>
+        <div class="ayah-text">${U.esc(ayah.text)}</div>
+        ${q ? `
+          <div class="answer-reveal ${isCorrect ? '' : 'wrong'}">
+            <div class="ar-label">${isCorrect ? '✓ إجابة صحيحة' : '✗ إجابة خاطئة'}</div>
+            <div class="ar-value">${U.esc(surahName)}</div>
+          </div>
+        ` : ''}
+      </div>
+      <div class="nav-bar">
+        <button class="nav-btn" id="prevBtn" type="button" ${isFirst ? 'disabled' : ''}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+          السابقة
+        </button>
+        <button class="nav-btn ${isLast ? 'primary' : ''}" id="nextBtn" type="button">
+          ${isLast ? 'إنهاء' : 'التالية'}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    `;
+
+    const prevBtn = U.$('#prevBtn');
+    const nextBtn = U.$('#nextBtn');
+
+    prevBtn?.addEventListener('click', () => this.prev());
+    nextBtn?.addEventListener('click', () => {
+      if(isLast) this.finish();
+      else this.next();
+    });
+  },
+
+  next(){
+    const s = App.session;
+    if(s.index >= s.scope.ayahs.length - 1) return;
+    s.index++;
+    s.currentAnswered = false;
+    s.currentChosen = null;
+    TG.haptic('light');
+    this.renderProgress();
+    this.renderCurrent();
+  },
+
+  prev(){
+    const s = App.session;
+    if(s.index <= 0) return;
+    s.index--;
+    s.currentAnswered = false;
+    s.currentChosen = null;
+    TG.haptic('light');
+    this.renderProgress();
+    this.renderCurrent();
+  },
+
+  finish(){
+    const s = App.session;
+    if(!s) return;
+
+    // نتائج
+    const total = s.questions.length;
+    const correct = s.questions.filter(q => q.correct).length;
+
+    // التسلسل اليومي
+    const today = U.today();
+    if(App.stats.lastDay !== today){
+      App.stats.streak++;
+      App.stats.lastDay = today;
+    }
+    App.stats.tests++;
+    App.saveStats();
+
+    App.lastResult = {
+      total, correct,
+      scopeLabel: s.scope.label,
+      questions: s.questions.slice(),
+    };
+
+    App.session = null;
+    TG.showBack(false);
+    Result.render();
+    Screens.go('result');
+  },
+};
+
+/* ============================================================
+   RESULT
+   ============================================================ */
+const Result = {
+  render(){
+    const r = App.lastResult;
+    if(!r){ Screens.go('home'); return; }
+
+    const percent = r.total > 0 ? Math.round((r.correct / r.total) * 100) : 0;
+
+    U.$('#resultCircle').style.setProperty('--score-deg', `${(percent / 100) * 360}deg`);
+    U.$('#resultScore').textContent = U.ar(r.correct);
+    U.$('#resultTotal').textContent = `من ${U.ar(r.total)}`;
+    U.$('#resultTitle').textContent = `${U.ar(percent)}٪ إتقان`;
+    U.$('#resultSubtitle').textContent = this.subtitle(percent);
+
+    const list = U.$('#resultList');
+    if(r.questions.length === 0){
+      list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-3);font-size:13px">لم تُجب على أي سؤال</div>';
+    } else {
+      list.innerHTML = r.questions.map(q => `
+        <div class="result-item">
+          <div class="result-mark ${q.correct ? 'yes' : 'no'}">
+            ${q.correct ? '✓' : '✗'}
+          </div>
+          <div class="result-body">
+            <div class="result-text">${U.esc(q.ayah.text)}</div>
+            <div class="result-ref">${U.esc(q.ayah.surah.name)} • الآية ${U.ar(q.ayah.numberInSurah)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    if(percent >= 80) setTimeout(() => UI.confetti(), 300);
+
+    U.$('#newTestBtn').onclick = () => {
+      TG.haptic('light');
+      Screens.go('home');
+      renderHome();
+    };
+    U.$('#shareBtn').onclick = () => {
+      TG.haptic('medium');
+      this.share();
+    };
+  },
+
+  subtitle(p){
+    if(p === 100) return 'ما شاء الله! حفظ متين 📖';
+    if(p >= 80) return 'أداء ممتاز، واصل 🌟';
+    if(p >= 60) return 'جيد، تحتاج مراجعة بسيطة 💪';
+    if(p >= 40) return 'بحاجة لمزيد من المراجعة 📚';
+    return 'راجع هذه الآيات جيداً 🔄';
+  },
+
+  share(){
+    const r = App.lastResult;
+    if(!r) return;
+    const percent = Math.round((r.correct / r.total) * 100);
+    const text = [
+      `📖 ثبت — اختبار حفظ`,
+      `النطاق: ${r.scopeLabel}`,
+      `النتيجة: ${r.correct}/${r.total} (${percent}%)`,
+      '',
+      `جرّب حفظك على @NourGameBot`,
+    ].join('\n');
+
+    if(TG.share(text)) return;
+    if(navigator.share){
+      navigator.share({ title: 'ثبت', text }).catch(() => {});
+      return;
+    }
+    try{
+      navigator.clipboard.writeText(text);
+      UI.toast('تم نسخ النتيجة ✓');
+    }catch(e){ UI.toast('تعذّر النسخ'); }
+  },
+};
+
+/* ============================================================
+   UI
+   ============================================================ */
+const UI = {
+  toastTimer: null,
+  applyTheme(){
+    const setting = App.settings.theme;
+    const effective = setting === 'auto' ? TG.theme : setting;
+    document.documentElement.setAttribute('data-theme', effective);
+    const meta = document.querySelector('meta[name=theme-color]');
+    if(meta) meta.content = effective === 'dark' ? '#0f151c' : '#faf7f0';
+    const icon = U.$('#themeIcon');
+    if(icon){
+      icon.innerHTML = effective === 'dark'
+        ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>'
+        : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    }
+    U.$$('#themeSeg button').forEach(b => b.classList.toggle('active', b.dataset.v === setting));
+  },
+  toast(msg){
+    const t = U.$('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+  },
+  confetti(){
+    const colors = ['#0e6b5c','#12917c','#2dd4bf','#d4a017','#c9a22e','#b8860b'];
+    const frag = document.createDocumentFragment();
+    for(let i=0;i<60;i++){
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      const sz = 6 + Math.random() * 6;
+      c.style.width = c.style.height = sz + 'px';
+      c.style.borderRadius = Math.random() > .5 ? '50%' : '2px';
+      c.style.animationDelay = (Math.random() * .5) + 's';
+      c.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+      frag.appendChild(c);
+    }
+    document.body.appendChild(frag);
+    setTimeout(() => {
+      document.querySelectorAll('.confetti').forEach(el => el.remove());
+    }, 4000);
+  },
+  openModal(sel){
+    U.$('#overlay').classList.add('show');
+    U.$$('.modal').forEach(m => m.classList.remove('show'));
+    U.$(sel)?.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  },
+  closeModals(){
+    U.$('#overlay').classList.remove('show');
+    U.$$('.modal').forEach(m => m.classList.remove('show'));
+    document.body.style.overflow = '';
+  },
+  anyModalOpen(){ return U.$$('.modal.show').length > 0; },
+  syncSettings(){
+    U.$('#hapticToggle')?.classList.toggle('on', App.settings.haptic);
+    U.$('#showRefToggle')?.classList.toggle('on', App.settings.showRef);
+    U.$$('#themeSeg button').forEach(b => b.classList.toggle('active', b.dataset.v === App.settings.theme));
+    this.applyTheme();
+  },
+};
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+function bindEvents(){
+  // Topbar
+  U.$('#helpBtn')?.addEventListener('click', () => { UI.openModal('#helpModal'); TG.haptic('light'); });
+  U.$('#settingsBtn')?.addEventListener('click', () => { UI.syncSettings(); UI.openModal('#settingsModal'); TG.haptic('light'); });
+  U.$('#themeBtn')?.addEventListener('click', () => {
+    const order = ['auto', 'light', 'dark'];
+    const i = order.indexOf(App.settings.theme);
+    App.settings.theme = order[(i + 1) % order.length];
+    App.saveSettings();
+    UI.applyTheme();
+    UI.syncSettings();
+    const names = { auto: 'تلقائي', light: 'فاتح', dark: 'داكن' };
+    UI.toast(`المظهر: ${names[App.settings.theme]}`);
+  });
+
+  // Start button
+  U.$('#startBtn')?.addEventListener('click', () => {
+    TG.haptic('light');
+    Screens.go('type');
+  });
+
+  // Back buttons (data-nav)
+  U.$$('[data-nav]').forEach(b => {
+    b.addEventListener('click', () => {
+      TG.haptic('light');
+      Screens.go(b.dataset.nav);
+    });
+  });
+
+  // Pick back
+  U.$('#pickBack')?.addEventListener('click', () => {
+    TG.haptic('light');
+    Screens.go('type');
+  });
+
+  // Test back (exit)
+  U.$('#testBack')?.addEventListener('click', () => App.cancelTest());
+
+  // End button
+  U.$('#endBtn')?.addEventListener('click', () => {
+    if(App.session){
+      if(confirm('هل تريد إنهاء الاختبار وعرض النتيجة؟')) Test.finish();
+    }
+  });
+
+  // Modal close
+  U.$('#overlay')?.addEventListener('click', () => UI.closeModals());
+  U.$$('[data-close]').forEach(b => b.addEventListener('click', () => UI.closeModals()));
+
+  // Settings
+  U.$$('#themeSeg button').forEach(b => {
+    b.addEventListener('click', () => {
+      App.settings.theme = b.dataset.v;
+      App.saveSettings();
+      UI.applyTheme();
+      UI.syncSettings();
+    });
+  });
+  U.$('#hapticToggle')?.addEventListener('click', () => {
+    App.settings.haptic = !App.settings.haptic;
+    App.saveSettings();
+    UI.syncSettings();
+    if(App.settings.haptic) TG.haptic('light');
+  });
+  U.$('#showRefToggle')?.addEventListener('click', () => {
+    App.settings.showRef = !App.settings.showRef;
+    App.saveSettings();
+    UI.syncSettings();
+  });
+  U.$('#resetStatsBtn')?.addEventListener('click', () => {
+    if(!confirm('سيتم حذف كل الإحصائيات. متابعة؟')) return;
+    App.stats = { ...CONFIG.DEFAULT_STATS };
+    App.saveStats();
+    renderHome();
+    UI.toast('تم إعادة التعيين');
+  });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init(){
+  TG.init();
+  UI.applyTheme();
+
+  // Player name
+  if(TG.user){
+    // يمكن إضافته لاحقاً
+  }
+
+  renderHome();
+  renderTypePicker();
+  bindEvents();
+  UI.syncSettings();
+
+  // Load all Quran data from the repository's local data folder
+  Quran.surahList().then(list => {
+    App.surahs = list;
+  }).catch((err) => {
+    console.error(err);
+    UI.toast('تعذّر تحميل ملفات القرآن المحلية');
+  });
+}
+
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+})();
+</script>
+</body>
+</html>
